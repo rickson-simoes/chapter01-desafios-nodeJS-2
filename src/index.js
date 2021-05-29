@@ -28,22 +28,57 @@ function checksExistsUserAccount(request, response, next) {
 function checksCreateTodosUserAvailability(request, response, next) {
   const { user } = request;
 
-  if (user.pro == false && user.todos.length < 10) {
-    return next();
+  if (user.pro == false && user.todos.length == 10) {
+    return response.status(403).json({error: "You reached maximum Todo's in this trial account."})
   }
 
   if(user.pro == true) {
     return next();
   }
 
+  return next();
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const { id } = request.params;
+
+  const user = users.find(f => f.username === username);
+
+  if (!user) {
+    return response.status(404).json({ error: "User not found." })
+  }
+
+  const isUUIDValid = validate(id);
+
+  if (!isUUIDValid) {
+    return response.status(400).json({ error: "UUID Not valid." });
+  }
+
+  const todo = user.todos.find(f => f.id === id);
+
+  if (!todo) {
+    return response.status(404).json({ error: "This id do not belong to this user." })
+  }
+
+  request.user = user;
+  request.todo = todo;
+
+  return next();
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+
+  const user = users.find(f => f.id === id);
+
+  if(!user){
+    return response.status(404).json({ error: "User not found." });
+  }
+
+  request.user = user;
+
+  return next();
 }
 
 app.post('/users', (request, response) => {
